@@ -106,27 +106,18 @@ class Server:
         if not check:
             self.__remove_client(client)
             return
-        print(0)
         data = self.__recv_field(client)
-        print(1)
         self.__is_ready_field[client] = True
-        print(2)
         try:
             while not self.__is_ready_field[self.__pairs_port[client]]:
-                print(2)
                 pass
-            print(4)
             self.__pairs_port[client].send(data)
-            print(5)
             if loads(data):
-                print(7)
                 print(sys.getsizeof(data))
             else:
                 # print("ROUND")
-                print(8)
                 self.__remove_client(client)
                 return
-            print(9)
             if is_first:
                 is_my_turn = is_first
                 while True:
