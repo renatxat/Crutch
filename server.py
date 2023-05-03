@@ -8,6 +8,7 @@ from time import time
 
 import config
 
+
 class Server:
     __sock = "socket.socket()"
     __quantity_users = 0
@@ -39,15 +40,13 @@ class Server:
                 thread2.start()
             else:
                 self.__pairs_port[client1] = 0
-                thread = Thread(target=self.__waiting_opponent, args=())
+                thread = Thread(target=self.__waiting_opponent, args=(client1,))
                 thread.start()
 
-    def __waiting_opponent(self):
+    def __waiting_opponent(self, conn):
         number = self.__quantity_users
         start_time = time()
         while number == self.__quantity_users:
-            conn, _ = self.__pairs_port.popitem()
-            self.__pairs_port[conn] = 0
             data = self.__recv_str(conn)
             if data or time() - start_time > config.TIME_WAITING_OPPONENT:
                 self.__pairs_port.popitem()
@@ -107,18 +106,27 @@ class Server:
         if not check:
             self.__remove_client(client)
             return
+        print(0)
         data = self.__recv_field(client)
+        print(1)
         self.__is_ready_field[client] = True
+        print(2)
         try:
             while not self.__is_ready_field[self.__pairs_port[client]]:
+                print(2)
                 pass
+            print(4)
             self.__pairs_port[client].send(data)
+            print(5)
             if loads(data):
+                print(7)
                 print(sys.getsizeof(data))
             else:
                 # print("ROUND")
+                print(8)
                 self.__remove_client(client)
                 return
+            print(9)
             if is_first:
                 is_my_turn = is_first
                 while True:
@@ -130,7 +138,7 @@ class Server:
                         req = self.__request(client, data)
                     if not req:
                         self.__remove_client(client)
-                        print("ROUND")
+                        # print("ROUND")
                         break
                     elif req == "same":
                         is_my_turn = is_my_turn
