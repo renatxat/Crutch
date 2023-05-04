@@ -68,9 +68,11 @@ class Server:
     @staticmethod
     def __recv_str(conn):
         mem_lim = 128
-        conn.settimeout(0.1)
+        conn.settimeout(0.2)
         try:
-            data = conn.recv(mem_lim)
+            data = 0
+            while not data:
+                data = conn.recv(mem_lim)
         except TimeoutError:
             return 0
         except ConnectionResetError:
@@ -83,7 +85,9 @@ class Server:
         time_wait = config.TIME_WAITING_MOVE
         conn.settimeout(time_wait)
         try:
-            data = conn.recv(mem_lim)
+            data = 0
+            while not data:
+                data = conn.recv(mem_lim)
         except TimeoutError:
             return 0
         except ConnectionResetError:
