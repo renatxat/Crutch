@@ -19,7 +19,7 @@ class Server:
     def __init__(self):
         self.__sock = socket.socket()
         self.__sock.bind((config.HOST, config.PORT))
-        self.__sock.listen(10000)
+        self.__sock.listen()
         self.__endless_loop()
 
     def __endless_loop(self):
@@ -71,8 +71,10 @@ class Server:
         conn.settimeout(0.2)
         try:
             data = 0
+            print(0)
             while not data:
                 data = conn.recv(mem_lim)
+            print(1)
         except TimeoutError:
             return 0
         except ConnectionResetError:
@@ -84,10 +86,12 @@ class Server:
         mem_lim = 256
         time_wait = config.TIME_WAITING_MOVE
         conn.settimeout(time_wait)
+        print(2)
         try:
             data = 0
             while not data:
                 data = conn.recv(mem_lim)
+            print(3)
         except TimeoutError:
             return 0
         except ConnectionResetError:
@@ -95,7 +99,9 @@ class Server:
         return tuple(data)
 
     def __request(self, conn, data):
+        print(4)
         conn.send(bytes(data))
+        print(5)
         return self.__recv_str(conn)
 
     @staticmethod
@@ -138,18 +144,27 @@ class Server:
                 is_my_turn = is_first
                 while True:
                     if is_my_turn:
+                        print(6)
                         data = self.__recv_tuple(client)
+                        print(7)
                         req = self.__request(self.__pairs_port[client], data)
+                        print(8)
                     else:
+                        print(9)
                         data = self.__recv_tuple(self.__pairs_port[client])
+                        print(10)
                         req = self.__request(client, data)
+                        print(11)
                     if not req:
                         self.__remove_client(client)
+                        print(12)
                         # print("ROUND")
                         break
                     elif req == "same":
+                        print(13)
                         is_my_turn = is_my_turn
                     elif req == "other":
+                        print(14)
                         is_my_turn = not is_my_turn
         except KeyError:
             pass
