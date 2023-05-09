@@ -48,33 +48,41 @@ class Server:
 
     def __waiting_opponent(self, conn):
         number = self.__quantity_users
-        start_time = time()
         t = Thread(target=self.__recv_state_waiting, args=(conn,))
         t.start()
         while number == self.__quantity_users and self.__still_waiting[conn] != "connect":
-            if self.__still_waiting[conn] == "disconnect" or time() - start_time > config.TIME_WAITING_OPPONENT:
+            if self.__still_waiting[conn] == "disconnect":
+                print("disconnected:", conn.getpeername())
                 self.__pairs_port.popitem()
                 self.__quantity_users -= 1
                 break
 
     def __recv_state_waiting(self, conn):
-        conn.settimeout(None)
+        conn.settimeout(1)
+        start_time = time()
         mem_lim = 128
         data = bytes("", encoding="UTF-8")
         while not data.decode("UTF-8"):
-            data = conn.recv(mem_lim)
+            if time() - start_time >= config.TIME_WAITING_OPPONENT + 1:
+                self.__still_waiting[conn] = "disconnect"
+                return
+            try:
+                data = conn.recv(mem_lim)
+            except TimeoutError:
+                pass
         self.__still_waiting[conn] = data.decode("UTF-8")
+        print(self.__still_waiting[conn])
 
     @staticmethod
     def __recv_str(conn):
         mem_lim = 128
-        conn.settimeout(0.2)
+        conn.settimeout(1)
         try:
-            data = 0
             print(0)
+            data = 0
             while not data:
+                print(1)
                 data = conn.recv(mem_lim)
-            print(1)
         except TimeoutError:
             return 0
         except ConnectionResetError:
@@ -85,23 +93,27 @@ class Server:
     def __recv_tuple(conn):
         mem_lim = 256
         time_wait = config.TIME_WAITING_MOVE
-        conn.settimeout(time_wait)
         print(2)
+        conn.settimeout(time_wait)
+        print(3)
         try:
             data = 0
+            print(4)
             while not data:
+                print(5)
                 data = conn.recv(mem_lim)
-            print(3)
+            print(6)
         except TimeoutError:
             return 0
         except ConnectionResetError:
             return 0
+        print(7)
         return tuple(data)
 
     def __request(self, conn, data):
-        print(4)
+        print(8)
         conn.send(bytes(data))
-        print(5)
+        print(9)
         return self.__recv_str(conn)
 
     @staticmethod
@@ -112,7 +124,9 @@ class Server:
         try:
             data = 0
             while not data:
+                print("field")
                 data = conn.recv(mem_lim)
+                print("done")
             return data
         except TimeoutError:
             return 0
@@ -127,48 +141,57 @@ class Server:
         number_player = 2 - is_first
         client.send(bytes(number_player))
         while self.__still_waiting[client] == "waiting":
+            print(10)
             pass
         data = self.__recv_field(client)
+        print(11)
         self.__is_ready_field[client] = True
+        print(12)
         try:
             while not self.__is_ready_field[self.__pairs_port[client]]:
                 pass
             self.__pairs_port[client].send(data)
+            print(13)
             if loads(data):
+                print(14)
                 print(sys.getsizeof(data))
+                print(15)
             else:
                 # print("ROUND")
+                print(16)
                 self.__remove_client(client)
+                print(17)
                 return
             if is_first:
                 is_my_turn = is_first
                 while True:
+                    print(18)
                     if is_my_turn:
-                        print(6)
+                        print(19)
                         data = self.__recv_tuple(client)
-                        print(7)
                         req = self.__request(self.__pairs_port[client], data)
-                        print(8)
                     else:
-                        print(9)
+                        print(20)
                         data = self.__recv_tuple(self.__pairs_port[client])
-                        print(10)
+                        print(20.5)
                         req = self.__request(client, data)
-                        print(11)
+                        print(20.9)
                     if not req:
+                        print(21)
                         self.__remove_client(client)
-                        print(12)
                         # print("ROUND")
                         break
                     elif req == "same":
-                        print(13)
+                        print(22)
                         is_my_turn = is_my_turn
                     elif req == "other":
-                        print(14)
+                        print(23)
                         is_my_turn = not is_my_turn
         except KeyError:
+            print(24)
             pass
         except TimeoutError:
+            print(25)
             try:
                 self.__remove_client(self.__pairs_port[client])
             except KeyError:
